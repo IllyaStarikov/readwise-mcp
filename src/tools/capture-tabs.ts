@@ -1,8 +1,7 @@
 import { z } from "zod";
 import { listTabs } from "../safari/tab-list.js";
 import { captureDom } from "../safari/dom-capture.js";
-import { saveDocument } from "../readwise/client.js";
-import { validateToken } from "../readwise/client.js";
+import { saveDocument, validateToken } from "../readwise/client.js";
 import { errorToToolResult } from "../utils/errors.js";
 import { logError } from "../utils/logger.js";
 

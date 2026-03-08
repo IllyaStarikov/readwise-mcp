@@ -17,6 +17,7 @@ const sampleHighlight = {
   note: "a note",
   location: 10,
   location_type: "page",
+  highlighted_at: "2024-01-01T00:00:00Z",
   url: null,
   color: "yellow",
   updated: "2024-01-01",

@@ -1,7 +1,6 @@
 import { z } from "zod";
 import { captureDom } from "../safari/dom-capture.js";
-import { saveDocument } from "../readwise/client.js";
-import { validateToken } from "../readwise/client.js";
+import { saveDocument, validateToken } from "../readwise/client.js";
 import { errorToToolResult } from "../utils/errors.js";
 
 export const capturePageSchema = {

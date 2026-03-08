@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(echo Total items: $\\(ls -1a | wc -l\\):*)",
+      "WebFetch(domain:www.npmjs.com)",
+      "WebFetch(domain:readwise.io)",
+      "WebFetch(domain:api.github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:registry.npmjs.org)",
+      "Bash(npm view:*)",
+      "Bash(npm pack:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run:*)",
+      "Bash(npm test:*)",
+      "Bash(npx tsc:*)",
+      "WebSearch",
+      "WebFetch(domain:docs.readwise.io)",
+      "Bash(npx vitest:*)",
+      "Bash(python3:*)",
+      "Bash(claude mcp:*)"
+    ]
+  }
+}

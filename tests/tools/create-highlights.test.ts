@@ -22,6 +22,7 @@ describe("createHighlightsHandler", () => {
         note: "note",
         location: 0,
         location_type: "order",
+        highlighted_at: null,
         url: null,
         color: "yellow",
         updated: "2024-01-01",

@@ -23,6 +23,7 @@ describe("manageHighlightHandler", () => {
       note: "updated note",
       location: 5,
       location_type: "page",
+      highlighted_at: null,
       url: null,
       color: "blue",
       updated: "2024-01-15",

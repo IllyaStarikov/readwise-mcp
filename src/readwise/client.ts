@@ -3,4 +3,16 @@
 
 export { getToken, handleApiResponse } from "./shared.js";
 export { validateToken, saveDocument } from "./reader-api.js";
+export {
+  createHighlights,
+  listHighlights,
+  getHighlight,
+  updateHighlight,
+  deleteHighlight,
+  listBooks,
+  getBook,
+  exportHighlights,
+  getDailyReview,
+} from "./classic-api.js";
 export type { SaveDocumentParams, SaveDocumentResponse } from "./types.js";
+export type * from "./classic-types.js";

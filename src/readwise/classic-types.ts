@@ -25,6 +25,7 @@ export interface HighlightResult {
   note: string;
   location: number;
   location_type: string;
+  highlighted_at: string | null;
   url: string | null;
   color: string;
   updated: string;
