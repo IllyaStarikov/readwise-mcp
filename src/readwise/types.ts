@@ -1,3 +1,10 @@
+// ── Shared enums ──
+
+export type DocumentLocation = "new" | "later" | "shortlist" | "archive" | "feed";
+export type DocumentCategory =
+  | "article" | "email" | "rss" | "highlight" | "note"
+  | "pdf" | "epub" | "tweet" | "video";
+
 // ── Save Document (v3) ──
 
 export interface SaveDocumentParams {
@@ -10,8 +17,8 @@ export interface SaveDocumentParams {
   image_url?: string;
   tags?: string[];
   should_clean_html?: boolean;
-  location?: "new" | "later" | "archive" | "feed";
-  category?: "article" | "email" | "rss" | "highlight" | "note" | "pdf" | "epub" | "tweet" | "video";
+  location?: DocumentLocation;
+  category?: DocumentCategory;
   notes?: string;
   saved_using?: string;
 }
@@ -23,11 +30,6 @@ export interface SaveDocumentResponse {
 }
 
 // ── Reader v3: List Documents ──
-
-export type DocumentLocation = "new" | "later" | "shortlist" | "archive" | "feed";
-export type DocumentCategory =
-  | "article" | "email" | "rss" | "highlight" | "note"
-  | "pdf" | "epub" | "tweet" | "video";
 
 export interface ListDocumentsParams {
   id?: string;

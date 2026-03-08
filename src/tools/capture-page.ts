@@ -18,7 +18,7 @@ export const capturePageSchema = {
   author: z.string().optional().describe("Set the author"),
   summary: z.string().optional().describe("Set a summary"),
   location: z
-    .enum(["new", "later", "archive", "feed"])
+    .enum(["new", "later", "shortlist", "archive", "feed"])
     .optional()
     .describe("Where to place the document in Reader"),
   category: z
@@ -44,7 +44,7 @@ export async function capturePageHandler(params: {
   title?: string;
   author?: string;
   summary?: string;
-  location?: "new" | "later" | "archive" | "feed";
+  location?: "new" | "later" | "shortlist" | "archive" | "feed";
   category?:
     | "article"
     | "email"

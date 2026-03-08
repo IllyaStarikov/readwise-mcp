@@ -1,4 +1,3 @@
-import { ReadwiseApiError, ReadwiseTokenError } from "../utils/errors.js";
 import { getToken, handleApiResponse } from "./shared.js";
 import type {
   SaveDocumentParams,
@@ -57,24 +56,11 @@ export async function saveDocument(
     body: JSON.stringify(body),
   });
 
-  if (response.status === 401) {
-    throw new ReadwiseTokenError();
-  }
-
-  if (response.status === 429) {
-    const retryAfter = response.headers.get("Retry-After") || "60";
-    throw new ReadwiseApiError(
-      `Rate limited by Readwise. Retry after ${retryAfter} seconds.`,
-      429,
-    );
-  }
-
+  // saveDocument accepts both 200 (already exists) and 201 (created).
+  // handleApiResponse passes any 2xx, so we use it for error cases,
+  // then narrow success to 200/201 ourselves.
   if (response.status !== 200 && response.status !== 201) {
-    const text = await response.text().catch(() => "");
-    throw new ReadwiseApiError(
-      `Readwise API returned ${response.status}: ${text}`,
-      response.status,
-    );
+    await handleApiResponse(response, "Save document");
   }
 
   const data = (await response.json()) as Record<string, unknown>;

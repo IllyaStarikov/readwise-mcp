@@ -155,5 +155,23 @@ describe("readwise client", () => {
       expect(body.location).toBe("later");
       expect(body.category).toBe("article");
     });
+
+    it("sends published_date and image_url when provided", async () => {
+      mockFetch.mockResolvedValue({
+        status: 201,
+        json: async () => ({ id: "new", url: "https://readwise.io/doc/new" }),
+      });
+
+      await saveDocument({
+        url: "https://example.com",
+        html: "<html>test</html>",
+        published_date: "2024-06-15",
+        image_url: "https://example.com/cover.jpg",
+      });
+
+      const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+      expect(body.published_date).toBe("2024-06-15");
+      expect(body.image_url).toBe("https://example.com/cover.jpg");
+    });
   });
 });
