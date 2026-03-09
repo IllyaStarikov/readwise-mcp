@@ -86,7 +86,9 @@ describe("openAndCaptureDom", () => {
       .mockResolvedValueOnce({ stdout: "", stderr: "" }); // close tab
     mockReadTempFile.mockResolvedValue("<html><body>Hello</body></html>");
 
-    const result = await openAndCaptureDom("https://example.com");
+    const result = await openAndCaptureDom("https://example.com", {
+      settleDelayMs: 0,
+    });
 
     expect(result).toEqual({
       html: "<html><body>Hello</body></html>",
@@ -116,6 +118,7 @@ describe("openAndCaptureDom", () => {
 
     await openAndCaptureDom("https://example.com", {
       closeAfterCapture: false,
+      settleDelayMs: 0,
     });
 
     // Should be 3 calls (open, readyState, captureDom) — no close
@@ -137,6 +140,7 @@ describe("openAndCaptureDom", () => {
 
     const result = await openAndCaptureDom("https://example.com", {
       pollIntervalMs: 10,
+      settleDelayMs: 0,
     });
 
     expect(result.url).toBe("https://example.com");
@@ -171,6 +175,7 @@ describe("openAndCaptureDom", () => {
 
     const result = await openAndCaptureDom("https://example.com", {
       pollIntervalMs: 10,
+      settleDelayMs: 0,
     });
 
     expect(result.url).toBe("https://example.com");
@@ -189,10 +194,32 @@ describe("openAndCaptureDom", () => {
 
     await openAndCaptureDom('https://example.com/path?q="test"', {
       pollIntervalMs: 10,
+      settleDelayMs: 0,
     });
 
     const openScript = mockRunAppleScript.mock.calls[0][0];
     // Double quotes should be escaped
     expect(openScript).toContain('\\"test\\"');
+  });
+
+  it("applies settle delay after readyState complete", async () => {
+    mockRunAppleScript
+      .mockResolvedValueOnce({ stdout: "1\n2", stderr: "" }) // open
+      .mockResolvedValueOnce({ stdout: "complete", stderr: "" }) // readyState
+      .mockResolvedValueOnce({
+        stdout: "https://example.com\nExample",
+        stderr: "",
+      }) // captureDom
+      .mockResolvedValueOnce({ stdout: "", stderr: "" }); // close
+    mockReadTempFile.mockResolvedValue("<html>test</html>");
+
+    const settleMs = 50;
+    const start = Date.now();
+    await openAndCaptureDom("https://example.com", {
+      settleDelayMs: settleMs,
+    });
+    const elapsed = Date.now() - start;
+
+    expect(elapsed).toBeGreaterThanOrEqual(settleMs - 10);
   });
 });

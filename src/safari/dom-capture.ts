@@ -20,7 +20,12 @@ export async function captureDom(
 tell application "Safari"
   set theTab to ${tabRef}
   set theUrl to URL of theTab
-  set theTitle to name of theTab
+  set jsTitle to do JavaScript "document.title" in theTab
+  if jsTitle is not "" then
+    set theTitle to jsTitle
+  else
+    set theTitle to name of theTab
+  end if
   set theHtml to do JavaScript "document.documentElement.outerHTML" in theTab
 
   set filePath to POSIX file "${tempPath}"
@@ -47,6 +52,7 @@ export interface OpenAndCaptureOptions {
   timeoutMs?: number;
   pollIntervalMs?: number;
   closeAfterCapture?: boolean;
+  settleDelayMs?: number;
 }
 
 function escapeForAppleScript(str: string): string {
@@ -64,6 +70,7 @@ export async function openAndCaptureDom(
   const timeoutMs = options?.timeoutMs ?? 30_000;
   const pollIntervalMs = options?.pollIntervalMs ?? 500;
   const closeAfterCapture = options?.closeAfterCapture ?? true;
+  const settleDelayMs = options?.settleDelayMs ?? 3000;
 
   const escapedUrl = escapeForAppleScript(url);
 
@@ -123,6 +130,9 @@ end tell`);
       `Page did not finish loading within ${timeoutMs / 1000} seconds: ${url}`,
     );
   }
+
+  // Wait for dynamic content to settle (JS rendering, API calls, title updates)
+  await delay(settleDelayMs);
 
   // Capture the DOM using the existing function
   const dom = await captureDom(windowIndex, tabIndex);
