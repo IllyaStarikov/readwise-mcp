@@ -156,6 +156,65 @@ describe("capturePageHandler", () => {
     );
   });
 
+  it("directSave saves URL without Safari capture", async () => {
+    mockValidateToken.mockResolvedValue(true);
+    mockSaveDocument.mockResolvedValue({
+      id: "direct-doc",
+      url: "https://readwise.io/reader/doc/direct-doc",
+      alreadyExists: false,
+    });
+
+    const result = await capturePageHandler({
+      url: "https://blog.pragmaticengineer.com/some-article/",
+      directSave: true,
+      tags: ["Pragmatic Engineer"],
+      location: "new",
+      category: "article",
+    });
+
+    expect(mockCaptureDom).not.toHaveBeenCalled();
+    expect(mockOpenAndCaptureDom).not.toHaveBeenCalled();
+    expect(mockSaveDocument).toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: "https://blog.pragmaticengineer.com/some-article/",
+        tags: ["Pragmatic Engineer"],
+        location: "new",
+        category: "article",
+      }),
+    );
+    expect(mockSaveDocument).toHaveBeenCalledWith(
+      expect.not.objectContaining({ html: expect.anything() }),
+    );
+    expect(result.content[0].text).toContain("Saved to Readwise Reader");
+    expect(result.content[0].text).toContain("direct-doc");
+  });
+
+  it("directSave returns error when url is not provided", async () => {
+    mockValidateToken.mockResolvedValue(true);
+
+    const result = await capturePageHandler({ directSave: true });
+
+    expect((result as any).isError).toBe(true);
+    expect(result.content[0].text).toContain("directSave requires a url");
+    expect(mockSaveDocument).not.toHaveBeenCalled();
+  });
+
+  it("directSave shows Readwise extraction notice when no title", async () => {
+    mockValidateToken.mockResolvedValue(true);
+    mockSaveDocument.mockResolvedValue({
+      id: "notitle-doc",
+      url: "https://readwise.io/reader/doc/notitle-doc",
+      alreadyExists: false,
+    });
+
+    const result = await capturePageHandler({
+      url: "https://example.com/article",
+      directSave: true,
+    });
+
+    expect(result.content[0].text).toContain("(Readwise will extract)");
+  });
+
   it("returns error when URL page load times out", async () => {
     mockValidateToken.mockResolvedValue(true);
     mockOpenAndCaptureDom.mockRejectedValue(

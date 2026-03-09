@@ -11,6 +11,13 @@ export const capturePageSchema = {
     .describe(
       "URL to open in Safari and capture. If omitted, captures the current active tab.",
     ),
+  directSave: z
+    .boolean()
+    .optional()
+    .default(false)
+    .describe(
+      "Save URL directly to Readwise without Safari DOM capture. Readwise will fetch the content itself. Requires url parameter.",
+    ),
   closeAfterCapture: z
     .boolean()
     .optional()
@@ -54,6 +61,7 @@ export const capturePageSchema = {
 
 export async function capturePageHandler(params: {
   url?: string;
+  directSave?: boolean;
   closeAfterCapture?: boolean;
   tags?: string[];
   should_clean_html?: boolean;
@@ -81,6 +89,42 @@ export async function capturePageHandler(params: {
           "Readwise token is invalid. Check your READWISE_TOKEN environment variable.",
         ),
       );
+    }
+
+    if (params.directSave) {
+      if (!params.url) {
+        return errorToToolResult(
+          new Error("directSave requires a url parameter."),
+        );
+      }
+
+      const result = await saveDocument({
+        url: params.url,
+        title: params.title,
+        author: params.author,
+        summary: params.summary,
+        tags: params.tags,
+        should_clean_html: params.should_clean_html,
+        location: params.location,
+        category: params.category,
+        notes: params.notes,
+      });
+
+      const status = result.alreadyExists
+        ? "Already existed in Readwise Reader (content not updated)"
+        : "Saved to Readwise Reader";
+
+      let output = `${status}\n\n`;
+      output += `Title: ${params.title ?? "(Readwise will extract)"}\n`;
+      output += `URL: ${params.url}\n`;
+      output += `Readwise URL: ${result.url}\n`;
+      output += `Document ID: ${result.id}\n`;
+      if (params.tags?.length)
+        output += `Tags: ${params.tags.join(", ")}\n`;
+
+      return {
+        content: [{ type: "text" as const, text: output }],
+      };
     }
 
     const dom = params.url
