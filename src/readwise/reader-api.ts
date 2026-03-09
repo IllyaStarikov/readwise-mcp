@@ -32,9 +32,10 @@ export async function saveDocument(
 
   const body: Record<string, unknown> = {
     url: params.url,
-    html: params.html,
     saved_using: params.saved_using ?? "safari-readwise-mcp",
   };
+
+  if (params.html) body.html = params.html;
 
   if (params.title) body.title = params.title;
   if (params.author) body.author = params.author;

@@ -26,14 +26,21 @@ export const listDocumentsSchema = {
   pageCursor: z.string().optional().describe("Pagination cursor from a previous response"),
 };
 
-function formatDocument(doc: ReaderDocument, index: number): string {
+function formatDocument(doc: ReaderDocument, index: number, includeContent: boolean): string {
   const tags = Object.keys(doc.tags);
   let out = `${index}. "${doc.title}" by ${doc.author || "Unknown"}\n`;
   out += `   ID: ${doc.id} | Category: ${doc.category} | Location: ${doc.location}\n`;
   out += `   URL: ${doc.source_url || doc.url}\n`;
   if (tags.length > 0) out += `   Tags: ${tags.join(", ")}\n`;
+  if (doc.word_count > 0) out += `   Word count: ${doc.word_count}\n`;
   if (doc.reading_progress > 0) out += `   Progress: ${Math.round(doc.reading_progress * 100)}%\n`;
   out += `   Updated: ${doc.updated_at}`;
+  if (includeContent && doc.html_content) {
+    const preview = doc.html_content.replace(/<[^>]*>/g, "").slice(0, 500).trim();
+    out += `\n   Content preview: ${preview}${doc.html_content.length > 500 ? "..." : ""}`;
+  } else if (includeContent && !doc.html_content) {
+    out += `\n   Content: (empty — no HTML content available)`;
+  }
   return out;
 }
 
@@ -69,7 +76,7 @@ export async function listDocumentsHandler(params: {
     }
     output += "\n\n";
 
-    output += result.results.map((doc, i) => formatDocument(doc, i + 1)).join("\n\n");
+    output += result.results.map((doc, i) => formatDocument(doc, i + 1, !!params.withHtmlContent)).join("\n\n");
 
     return {
       content: [{ type: "text" as const, text: output }],

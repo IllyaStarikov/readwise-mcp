@@ -9,7 +9,7 @@ export type DocumentCategory =
 
 export interface SaveDocumentParams {
   url: string;
-  html: string;
+  html?: string;
   title?: string;
   author?: string;
   summary?: string;
@@ -61,6 +61,7 @@ export interface ReaderDocument {
   notes: string;
   parent_id: string | null;
   reading_progress: number;
+  html_content?: string;
 }
 
 export interface ListDocumentsResponse {
