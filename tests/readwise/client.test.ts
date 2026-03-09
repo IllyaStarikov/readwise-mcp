@@ -26,7 +26,7 @@ describe("readwise client", () => {
       const result = await validateToken();
       expect(result).toBe(true);
       expect(mockFetch).toHaveBeenCalledWith(
-        "https://readwise.io/api/v3/auth/",
+        "https://readwise.io/api/v2/auth/",
         expect.objectContaining({
           headers: { Authorization: "Token test-token-123" },
         }),

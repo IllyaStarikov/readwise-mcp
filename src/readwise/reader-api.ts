@@ -16,7 +16,7 @@ const BASE_V3 = "https://readwise.io/api/v3";
 
 export async function validateToken(token?: string): Promise<boolean> {
   const t = token ?? getToken();
-  const response = await fetch(`${BASE_V3}/auth/`, {
+  const response = await fetch("https://readwise.io/api/v2/auth/", {
     headers: { Authorization: `Token ${t}` },
   });
   return response.status === 204;

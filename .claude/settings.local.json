@@ -18,7 +18,13 @@
       "WebFetch(domain:docs.readwise.io)",
       "Bash(npx vitest:*)",
       "Bash(python3:*)",
-      "Bash(claude mcp:*)"
+      "Bash(claude mcp:*)",
+      "Bash(open:*)",
+      "mcp__safari-readwise-mcp__capture-page",
+      "Bash(ls:*)",
+      "Bash(env:*)",
+      "Bash(curl:*)",
+      "Bash(osascript:*)"
     ]
   }
 }
