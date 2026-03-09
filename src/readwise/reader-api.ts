@@ -1,4 +1,5 @@
 import { getToken, handleApiResponse } from "./shared.js";
+import { rateLimitedFetch } from "./rate-limiter.js";
 import type {
   SaveDocumentParams,
   SaveDocumentResponse,
@@ -16,7 +17,7 @@ const BASE_V3 = "https://readwise.io/api/v3";
 
 export async function validateToken(token?: string): Promise<boolean> {
   const t = token ?? getToken();
-  const response = await fetch("https://readwise.io/api/v2/auth/", {
+  const response = await rateLimitedFetch("https://readwise.io/api/v2/auth/", {
     headers: { Authorization: `Token ${t}` },
   });
   return response.status === 204;
@@ -47,7 +48,7 @@ export async function saveDocument(
   if (params.category) body.category = params.category;
   if (params.tags) body.tags = params.tags;
 
-  const response = await fetch(`${BASE_V3}/save/`, {
+  const response = await rateLimitedFetch(`${BASE_V3}/save/`, {
     method: "POST",
     headers: {
       Authorization: `Token ${token}`,
@@ -88,7 +89,7 @@ export async function listDocuments(
   if (params.withHtmlContent) url.searchParams.set("withHtmlContent", "true");
   if (params.pageCursor) url.searchParams.set("pageCursor", params.pageCursor);
 
-  const response = await fetch(url.toString(), {
+  const response = await rateLimitedFetch(url.toString(), {
     headers: { Authorization: `Token ${token}` },
   });
 
@@ -111,7 +112,7 @@ export async function updateDocument(
   const token = getToken();
   const { document_id, ...fields } = params;
 
-  const response = await fetch(`${BASE_V3}/update/${document_id}/`, {
+  const response = await rateLimitedFetch(`${BASE_V3}/update/${document_id}/`, {
     method: "PATCH",
     headers: {
       Authorization: `Token ${token}`,
@@ -130,7 +131,7 @@ export async function updateDocument(
 export async function deleteDocument(documentId: string): Promise<void> {
   const token = getToken();
 
-  const response = await fetch(`${BASE_V3}/delete/${documentId}/`, {
+  const response = await rateLimitedFetch(`${BASE_V3}/delete/${documentId}/`, {
     method: "DELETE",
     headers: { Authorization: `Token ${token}` },
   });
@@ -151,7 +152,7 @@ export async function bulkUpdateDocuments(
     ...fields,
   }));
 
-  const response = await fetch(`${BASE_V3}/bulk_update/`, {
+  const response = await rateLimitedFetch(`${BASE_V3}/bulk_update/`, {
     method: "PATCH",
     headers: {
       Authorization: `Token ${token}`,
@@ -168,7 +169,7 @@ export async function bulkUpdateDocuments(
 export async function listReaderTags(): Promise<ReaderTag[]> {
   const token = getToken();
 
-  const response = await fetch(`${BASE_V3}/tags/`, {
+  const response = await rateLimitedFetch(`${BASE_V3}/tags/`, {
     headers: { Authorization: `Token ${token}` },
   });
 

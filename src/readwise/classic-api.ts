@@ -1,4 +1,5 @@
 import { getToken, handleApiResponse } from "./shared.js";
+import { rateLimitedFetch } from "./rate-limiter.js";
 import type {
   CreateHighlightsParams,
   CreateHighlightsBookResponse,
@@ -23,7 +24,7 @@ export async function createHighlights(
 ): Promise<CreateHighlightsBookResponse[]> {
   const token = getToken();
 
-  const response = await fetch(`${BASE_V2}/highlights/`, {
+  const response = await rateLimitedFetch(`${BASE_V2}/highlights/`, {
     method: "POST",
     headers: {
       Authorization: `Token ${token}`,
@@ -50,7 +51,7 @@ export async function listHighlights(
   if (params.page) url.searchParams.set("page", String(params.page));
   if (params.updatedAfter) url.searchParams.set("updated__gt", params.updatedAfter);
 
-  const response = await fetch(url.toString(), {
+  const response = await rateLimitedFetch(url.toString(), {
     headers: { Authorization: `Token ${token}` },
   });
 
@@ -64,7 +65,7 @@ export async function listHighlights(
 export async function getHighlight(id: number): Promise<HighlightResult> {
   const token = getToken();
 
-  const response = await fetch(`${BASE_V2}/highlights/${id}/`, {
+  const response = await rateLimitedFetch(`${BASE_V2}/highlights/${id}/`, {
     headers: { Authorization: `Token ${token}` },
   });
 
@@ -81,7 +82,7 @@ export async function updateHighlight(
 ): Promise<HighlightResult> {
   const token = getToken();
 
-  const response = await fetch(`${BASE_V2}/highlights/${id}/`, {
+  const response = await rateLimitedFetch(`${BASE_V2}/highlights/${id}/`, {
     method: "PATCH",
     headers: {
       Authorization: `Token ${token}`,
@@ -100,7 +101,7 @@ export async function updateHighlight(
 export async function deleteHighlight(id: number): Promise<void> {
   const token = getToken();
 
-  const response = await fetch(`${BASE_V2}/highlights/${id}/`, {
+  const response = await rateLimitedFetch(`${BASE_V2}/highlights/${id}/`, {
     method: "DELETE",
     headers: { Authorization: `Token ${token}` },
   });
@@ -122,7 +123,7 @@ export async function listBooks(
   if (params.page) url.searchParams.set("page", String(params.page));
   if (params.updatedAfter) url.searchParams.set("updated__gt", params.updatedAfter);
 
-  const response = await fetch(url.toString(), {
+  const response = await rateLimitedFetch(url.toString(), {
     headers: { Authorization: `Token ${token}` },
   });
 
@@ -136,7 +137,7 @@ export async function listBooks(
 export async function getBook(id: number): Promise<BookResult> {
   const token = getToken();
 
-  const response = await fetch(`${BASE_V2}/books/${id}/`, {
+  const response = await rateLimitedFetch(`${BASE_V2}/books/${id}/`, {
     headers: { Authorization: `Token ${token}` },
   });
 
@@ -157,7 +158,7 @@ export async function exportHighlights(
   if (params.ids) url.searchParams.set("ids", params.ids.join(","));
   if (params.pageCursor) url.searchParams.set("pageCursor", params.pageCursor);
 
-  const response = await fetch(url.toString(), {
+  const response = await rateLimitedFetch(url.toString(), {
     headers: { Authorization: `Token ${token}` },
   });
 
@@ -171,7 +172,7 @@ export async function exportHighlights(
 export async function getDailyReview(): Promise<DailyReviewResponse> {
   const token = getToken();
 
-  const response = await fetch(`${BASE_V2}/review/`, {
+  const response = await rateLimitedFetch(`${BASE_V2}/review/`, {
     headers: { Authorization: `Token ${token}` },
   });
 

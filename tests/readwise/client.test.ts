@@ -1,4 +1,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+
+vi.mock("../../src/readwise/rate-limiter.js", () => ({
+  rateLimitedFetch: (...args: Parameters<typeof fetch>) => fetch(...args),
+}));
+
 import { validateToken, saveDocument } from "../../src/readwise/client.js";
 
 const mockFetch = vi.fn();

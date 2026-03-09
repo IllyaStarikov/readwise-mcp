@@ -44,10 +44,6 @@ export const captureTabsSchema = {
   notes: z.string().optional().describe("Notes to attach to all documents"),
 };
 
-function delay(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
 export async function captureTabsHandler(params: {
   urls?: string[];
   tags?: string[];
@@ -105,11 +101,6 @@ export async function captureTabsHandler(params: {
 
     for (let i = 0; i < tabs.length; i++) {
       const tab = tabs[i];
-
-      // Rate limit: ~50 req/min → ~1.2s between requests
-      if (i > 0) {
-        await delay(1300);
-      }
 
       try {
         const dom = await captureDom(tab.windowIndex, tab.tabIndex);

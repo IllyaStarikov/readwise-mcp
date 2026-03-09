@@ -22,6 +22,7 @@ src/
 │   ├── shared.ts         # getToken(), handleApiResponse() — used by both API modules
 │   ├── reader-api.ts     # Reader v3 API: auth, save, list/update/delete documents, tags
 │   ├── classic-api.ts    # Classic v2 API: highlights CRUD, books, export, daily review
+│   ├── rate-limiter.ts   # Global fetch queue: 1.3s spacing + 429 auto-retry
 │   ├── client.ts         # Barrel re-exports (backward compat for existing imports)
 │   ├── types.ts          # Reader v3 types
 │   └── classic-types.ts  # Classic v2 types
@@ -60,6 +61,7 @@ src/
 - **Pagination**: v3 tools use cursor-based (`pageCursor`/`nextPageCursor`), v2 tools use page-based (`page`/`page_size`, `next`/`previous`).
 - **Output format**: All tools return human-readable text. No JSON responses — the text is structured enough for LLMs to parse.
 - **Barrel re-exports**: `client.ts` re-exports from `shared.ts`, `reader-api.ts`, and `classic-api.ts` so any function can be imported via `"./readwise/client.js"`.
+- **Rate limiting**: `rate-limiter.ts` exports `rateLimitedFetch()` — a drop-in `fetch` wrapper that queues all Readwise API requests sequentially with 1.3s spacing (~46 req/min). On 429, retries up to 3 times using the `Retry-After` header. All API functions in `reader-api.ts` and `classic-api.ts` use it instead of bare `fetch`.
 
 ## Environment
 
@@ -71,7 +73,7 @@ src/
 
 Tests are in `tests/` mirroring `src/` structure. All API calls are mocked via `vi.fn()` on `global.fetch` or `vi.mock()`. No real API calls in tests.
 
-- 24 test files, 117 tests
+- 25 test files, 134 tests
 - API layer tests verify URL construction, headers, body serialization, and error mapping
 - Tool handler tests verify output formatting, empty states, pagination display, and error propagation
 
@@ -109,3 +111,4 @@ Tests are in `tests/` mirroring `src/` structure. All API calls are mocked via `
 - **`validateToken()` pre-check in capture tools**: `capture-page` and `capture-tabs` call `validateToken()` before `saveDocument()`. This is an extra network round-trip since `saveDocument` already throws `ReadwiseTokenError` on 401, but it provides a friendlier error message before attempting DOM capture. Kept intentionally.
 - **`saveDocument` special 200/201 handling**: Unlike all other API functions that delegate entirely to `handleApiResponse()`, `saveDocument` checks 200 (already exists) and 201 (created) itself, then delegates non-2xx to `handleApiResponse`. This is because it needs to distinguish between the two success statuses to set `alreadyExists`.
 - **`list-documents` schema `withHtmlContent` default**: `.optional().default(false)` is technically unnecessary since the API layer treats `undefined` as falsy, but it's harmless and makes the default explicit in the schema.
+- **Global rate limiter vs per-tool delays**: All Readwise API calls go through `rateLimitedFetch()` which serializes requests with 1.3s spacing. This handles concurrent MCP tool calls (e.g., 50 parallel `delete-document` calls) gracefully. `capture-tabs.ts` no longer needs its own delay logic.
