@@ -34,31 +34,22 @@ describe("classic-api", () => {
   // ── createHighlights ──
 
   describe("createHighlights", () => {
-    it("sends POST with highlights body and returns array", async () => {
+    it("sends POST with highlights body and returns book-grouped response", async () => {
       const mockResults = [
         {
-          id: 1,
-          text: "A great quote",
-          note: "",
-          location: 42,
-          location_type: "page",
-          url: null,
-          color: "yellow",
-          updated: "2025-01-01T00:00:00Z",
-          book_id: 100,
+          id: 100,
+          title: "My Book",
+          author: "Author",
+          category: "articles",
+          source: "api_article",
+          num_highlights: 2,
+          modified_highlights: [1, 2],
+          cover_image_url: "",
+          highlights_url: "https://readwise.io/bookreview/100",
+          source_url: "https://example.com",
+          asin: null,
           tags: [],
-        },
-        {
-          id: 2,
-          text: "Another quote",
-          note: "my note",
-          location: 50,
-          location_type: "page",
-          url: null,
-          color: "blue",
-          updated: "2025-01-01T00:00:00Z",
-          book_id: 100,
-          tags: [{ id: 1, name: "important" }],
+          document_note: "",
         },
       ];
 
@@ -77,9 +68,10 @@ describe("classic-api", () => {
 
       const result = await createHighlights(params);
 
-      expect(result).toHaveLength(2);
-      expect(result[0].text).toBe("A great quote");
-      expect(result[1].note).toBe("my note");
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe(100);
+      expect(result[0].modified_highlights).toEqual([1, 2]);
+      expect(result[0].title).toBe("My Book");
 
       expect(mockFetch).toHaveBeenCalledWith(
         "https://readwise.io/api/v2/highlights/",

@@ -39,12 +39,18 @@ export async function updateDocumentHandler(params: {
     const updated = await updateDocument(params);
 
     let output = `Document updated successfully\n\n`;
-    output += `Title: ${updated.title}\n`;
-    output += `Author: ${updated.author || "Unknown"}\n`;
     output += `ID: ${updated.id}\n`;
-    output += `Category: ${updated.category} | Location: ${updated.location}\n`;
-    const tags = Object.keys(updated.tags);
-    if (tags.length > 0) output += `Tags: ${tags.join(", ")}\n`;
+
+    const changes: string[] = [];
+    if (params.title) changes.push(`Title: ${params.title}`);
+    if (params.author) changes.push(`Author: ${params.author}`);
+    if (params.summary) changes.push(`Summary: ${params.summary}`);
+    if (params.location) changes.push(`Location: ${params.location}`);
+    if (params.category) changes.push(`Category: ${params.category}`);
+    if (params.tags) changes.push(`Tags: ${params.tags.join(", ")}`);
+    if (params.notes) changes.push(`Notes: ${params.notes}`);
+    if (params.seen !== undefined) changes.push(`Seen: ${params.seen}`);
+    if (changes.length > 0) output += changes.join("\n") + "\n";
 
     return {
       content: [{ type: "text" as const, text: output }],

@@ -107,7 +107,7 @@ export async function listDocuments(
 
 export async function updateDocument(
   params: UpdateDocumentParams,
-): Promise<ReaderDocument> {
+): Promise<{ id: string; url: string }> {
   const token = getToken();
   const { document_id, ...fields } = params;
 
@@ -122,7 +122,7 @@ export async function updateDocument(
 
   await handleApiResponse(response, "Update document");
 
-  return (await response.json()) as ReaderDocument;
+  return (await response.json()) as { id: string; url: string };
 }
 
 // ── Delete Document ──
@@ -145,13 +145,19 @@ export async function bulkUpdateDocuments(
 ): Promise<void> {
   const token = getToken();
 
+  // API expects "id" not "document_id" in each item
+  const mapped = updates.map(({ document_id, ...fields }) => ({
+    id: document_id,
+    ...fields,
+  }));
+
   const response = await fetch(`${BASE_V3}/bulk_update/`, {
     method: "PATCH",
     headers: {
       Authorization: `Token ${token}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(updates),
+    body: JSON.stringify({ updates: mapped }),
   });
 
   await handleApiResponse(response, "Bulk update documents");
@@ -168,5 +174,11 @@ export async function listReaderTags(): Promise<ReaderTag[]> {
 
   await handleApiResponse(response, "List tags");
 
-  return (await response.json()) as ReaderTag[];
+  const data = (await response.json()) as {
+    count: number;
+    nextPageCursor: string | null;
+    results: ReaderTag[];
+  };
+
+  return data.results;
 }

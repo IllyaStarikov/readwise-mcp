@@ -1,6 +1,7 @@
 import { getToken, handleApiResponse } from "./shared.js";
 import type {
   CreateHighlightsParams,
+  CreateHighlightsBookResponse,
   HighlightResult,
   ListHighlightsParams,
   ListHighlightsResponse,
@@ -19,7 +20,7 @@ const BASE_V2 = "https://readwise.io/api/v2";
 
 export async function createHighlights(
   params: CreateHighlightsParams,
-): Promise<HighlightResult[]> {
+): Promise<CreateHighlightsBookResponse[]> {
   const token = getToken();
 
   const response = await fetch(`${BASE_V2}/highlights/`, {
@@ -33,7 +34,7 @@ export async function createHighlights(
 
   await handleApiResponse(response, "Create highlights");
 
-  return (await response.json()) as HighlightResult[];
+  return (await response.json()) as CreateHighlightsBookResponse[];
 }
 
 // ── List Highlights ──

@@ -49,11 +49,16 @@ export async function createHighlightsHandler(params: {
   try {
     const results = await createHighlights(params);
 
-    let output = `Created ${results.length} highlight(s)\n\n`;
-    for (const h of results) {
-      output += `- ID: ${h.id} | Book ID: ${h.book_id}\n`;
-      output += `  "${h.text.slice(0, 100)}${h.text.length > 100 ? "..." : ""}"\n`;
-      if (h.note) output += `  Note: ${h.note}\n`;
+    let totalHighlights = 0;
+    for (const book of results) {
+      totalHighlights += book.modified_highlights.length;
+    }
+
+    let output = `Created ${totalHighlights} highlight(s) in ${results.length} book(s)\n\n`;
+    for (const book of results) {
+      output += `Book: "${book.title}" by ${book.author || "Unknown"}\n`;
+      output += `  Book ID: ${book.id}\n`;
+      output += `  Highlight IDs: ${book.modified_highlights.join(", ")}\n`;
       output += "\n";
     }
 

@@ -17,17 +17,19 @@ describe("createHighlightsHandler", () => {
   it("returns formatted list of created highlights with IDs", async () => {
     mockCreateHighlights.mockResolvedValue([
       {
-        id: 1,
-        text: "Test highlight",
-        note: "note",
-        location: 0,
-        location_type: "order",
-        highlighted_at: null,
-        url: null,
-        color: "yellow",
-        updated: "2024-01-01",
-        book_id: 42,
+        id: 42,
+        title: "Test Book",
+        author: "Author",
+        category: "articles",
+        source: "api_article",
+        num_highlights: 1,
+        modified_highlights: [1],
+        cover_image_url: "",
+        highlights_url: "https://readwise.io/bookreview/42",
+        source_url: null,
+        asin: null,
         tags: [],
+        document_note: "",
       },
     ]);
 
@@ -36,10 +38,9 @@ describe("createHighlightsHandler", () => {
     });
 
     expect(result.content[0].text).toContain("Created 1 highlight(s)");
-    expect(result.content[0].text).toContain("ID: 1");
     expect(result.content[0].text).toContain("Book ID: 42");
-    expect(result.content[0].text).toContain('"Test highlight"');
-    expect(result.content[0].text).toContain("Note: note");
+    expect(result.content[0].text).toContain("Highlight IDs: 1");
+    expect(result.content[0].text).toContain('"Test Book"');
   });
 
   it("returns isError on failure", async () => {

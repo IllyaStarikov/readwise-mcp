@@ -183,32 +183,13 @@ describe("reader-api", () => {
 
   describe("updateDocument", () => {
     it("sends PATCH with document_id in URL and fields in body", async () => {
-      const updatedDoc = {
-        id: "doc-1",
-        url: "https://readwise.io/reader/doc/doc-1",
-        source_url: "https://example.com/1",
-        title: "Updated Title",
-        author: "Author A",
-        source: "web",
-        category: "article",
-        location: "archive",
-        tags: {},
-        site_name: "Example",
-        word_count: 500,
-        created_at: "2025-01-01T00:00:00Z",
-        updated_at: "2025-01-05T00:00:00Z",
-        published_date: null,
-        summary: "",
-        image_url: "",
-        notes: "",
-        parent_id: null,
-        reading_progress: 1,
-      };
-
       mockFetch.mockResolvedValue({
         status: 200,
         headers: new Headers(),
-        json: async () => updatedDoc,
+        json: async () => ({
+          id: "doc-1",
+          url: "https://readwise.io/reader/doc/doc-1",
+        }),
       });
 
       const result = await updateDocument({
@@ -217,7 +198,8 @@ describe("reader-api", () => {
         location: "archive",
       });
 
-      expect(result.title).toBe("Updated Title");
+      expect(result.id).toBe("doc-1");
+      expect(result.url).toBe("https://readwise.io/reader/doc/doc-1");
       expect(mockFetch).toHaveBeenCalledWith(
         "https://readwise.io/api/v3/update/doc-1/",
         expect.objectContaining({
@@ -260,7 +242,7 @@ describe("reader-api", () => {
   // ── bulkUpdateDocuments ──
 
   describe("bulkUpdateDocuments", () => {
-    it("sends PATCH with array body", async () => {
+    it("sends PATCH with updates wrapped in dict", async () => {
       mockFetch.mockResolvedValue({
         status: 200,
         headers: new Headers(),
@@ -285,14 +267,19 @@ describe("reader-api", () => {
       );
 
       const body = JSON.parse(mockFetch.mock.calls[0][1].body);
-      expect(body).toEqual(updates);
+      expect(body).toEqual({
+        updates: [
+          { id: "doc-1", location: "archive" },
+          { id: "doc-2", title: "New Title" },
+        ],
+      });
     });
   });
 
   // ── listReaderTags ──
 
   describe("listReaderTags", () => {
-    it("returns array of tags", async () => {
+    it("returns array of tags extracted from paginated response", async () => {
       const mockTags = [
         { id: "tag-1", name: "science", type: "manual", created_at: "2025-01-01T00:00:00Z", updated_at: "2025-01-01T00:00:00Z" },
         { id: "tag-2", name: "tech", type: "manual", created_at: "2025-01-02T00:00:00Z", updated_at: "2025-01-02T00:00:00Z" },
@@ -301,7 +288,11 @@ describe("reader-api", () => {
       mockFetch.mockResolvedValue({
         status: 200,
         headers: new Headers(),
-        json: async () => mockTags,
+        json: async () => ({
+          count: 2,
+          nextPageCursor: null,
+          results: mockTags,
+        }),
       });
 
       const result = await listReaderTags();

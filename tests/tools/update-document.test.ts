@@ -9,38 +9,15 @@ import { updateDocumentHandler } from "../../src/tools/update-document.js";
 
 const mockUpdateDocument = vi.mocked(updateDocument);
 
-const mockDocument = {
-  id: "doc_123",
-  url: "https://readwise.io/reader/doc_123",
-  source_url: "https://example.com/article",
-  title: "Test Article",
-  author: "Test Author",
-  source: "web",
-  category: "article",
-  location: "later",
-  tags: { tag1: "tag1" },
-  site_name: "Example",
-  word_count: 1000,
-  created_at: "2024-01-01T00:00:00Z",
-  updated_at: "2024-01-15T00:00:00Z",
-  published_date: null,
-  summary: "A test article",
-  image_url: "",
-  notes: "",
-  parent_id: null,
-  reading_progress: 0.5,
-};
-
 describe("updateDocumentHandler", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it("returns success message with updated fields", async () => {
+  it("returns success message with updated fields from params", async () => {
     mockUpdateDocument.mockResolvedValue({
-      ...mockDocument,
-      title: "Updated Title",
-      location: "archive",
+      id: "doc_123",
+      url: "https://readwise.io/reader/doc_123",
     });
 
     const result = await updateDocumentHandler({
@@ -54,7 +31,6 @@ describe("updateDocumentHandler", () => {
     expect(text).toContain("Updated Title");
     expect(text).toContain("doc_123");
     expect(text).toContain("archive");
-    expect(text).toContain("tag1");
     expect((result as any).isError).toBeUndefined();
 
     expect(mockUpdateDocument).toHaveBeenCalledWith({

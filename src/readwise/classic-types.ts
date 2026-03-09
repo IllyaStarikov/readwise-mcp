@@ -19,6 +19,22 @@ export interface CreateHighlightsParams {
   highlights: CreateHighlightItem[];
 }
 
+export interface CreateHighlightsBookResponse {
+  id: number;
+  title: string;
+  author: string;
+  category: string;
+  source: string;
+  num_highlights: number;
+  modified_highlights: number[];
+  cover_image_url: string;
+  highlights_url: string;
+  source_url: string | null;
+  asin: string | null;
+  tags: Array<{ id: number; name: string }>;
+  document_note: string;
+}
+
 export interface HighlightResult {
   id: number;
   text: string;
