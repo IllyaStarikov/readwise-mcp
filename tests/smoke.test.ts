@@ -31,6 +31,7 @@ import { exportHighlightsHandler } from "../src/tools/export-highlights.js";
 import { dailyReviewHandler } from "../src/tools/daily-review.js";
 import { checkSetupHandler } from "../src/tools/check-setup.js";
 import { listTabsHandler } from "../src/tools/list-tabs.js";
+import { capturePageHandler } from "../src/tools/capture-page.js";
 
 // ── Constants & shared state ──
 
@@ -496,6 +497,26 @@ describe.skipIf(!READWISE_TOKEN)("Smoke Tests", { timeout: 120_000 }, () => {
       expect(
         text.includes("Window") || text.includes("No Safari tabs are open"),
       ).toBe(true);
+    });
+
+    it("capturePageHandler with url opens, captures, and saves", async () => {
+      await rateLimitDelay();
+      const result = await capturePageHandler({
+        url: "https://example.com",
+        closeAfterCapture: true,
+        location: "new",
+        tags: [TEST_TAG],
+      });
+      const text = getToolText(result);
+      expect(text).toContain("Readwise Reader");
+      expect(text).toContain("Document ID:");
+
+      // Cleanup created document
+      const idMatch = text.match(/Document ID:\s*(\S+)/);
+      if (idMatch) {
+        await rateLimitDelay();
+        await deleteDocument(idMatch[1]);
+      }
     });
   });
 });

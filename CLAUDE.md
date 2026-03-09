@@ -28,7 +28,7 @@ src/
 ├── safari/
 │   ├── applescript.ts    # osascript runner with error classification
 │   ├── diagnostics.ts    # Permission/setup checks
-│   ├── dom-capture.ts    # Captures full DOM via Safari JavaScript bridge
+│   ├── dom-capture.ts    # Captures full DOM via Safari JavaScript bridge (+ open-and-capture for URLs)
 │   └── tab-list.ts       # Lists open Safari tabs via AppleScript
 ├── tools/                # One file per MCP tool (schema + handler)
 │   ├── list-tabs.ts
@@ -82,7 +82,7 @@ Tests are in `tests/` mirroring `src/` structure. All API calls are mocked via `
 |------|-------------|
 | `list-tabs` | List open Safari tabs |
 | `check-setup` | Diagnostic check (Safari permissions + Readwise token) |
-| `capture-page` | Capture active tab DOM → Readwise Reader |
+| `capture-page` | Capture a page DOM → Readwise Reader (provide URL or capture active tab) |
 | `capture-tabs` | Capture multiple tabs → Readwise Reader (rate-limited) |
 
 ### Reader v3 (5)

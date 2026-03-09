@@ -1,9 +1,23 @@
 import { z } from "zod";
-import { captureDom } from "../safari/dom-capture.js";
+import { captureDom, openAndCaptureDom } from "../safari/dom-capture.js";
 import { saveDocument, validateToken } from "../readwise/client.js";
 import { errorToToolResult } from "../utils/errors.js";
 
 export const capturePageSchema = {
+  url: z
+    .string()
+    .url()
+    .optional()
+    .describe(
+      "URL to open in Safari and capture. If omitted, captures the current active tab.",
+    ),
+  closeAfterCapture: z
+    .boolean()
+    .optional()
+    .default(true)
+    .describe(
+      "Close the Safari tab after capturing (only applies when url is provided)",
+    ),
   tags: z
     .array(z.string())
     .optional()
@@ -39,6 +53,8 @@ export const capturePageSchema = {
 };
 
 export async function capturePageHandler(params: {
+  url?: string;
+  closeAfterCapture?: boolean;
   tags?: string[];
   should_clean_html?: boolean;
   title?: string;
@@ -67,7 +83,11 @@ export async function capturePageHandler(params: {
       );
     }
 
-    const dom = await captureDom();
+    const dom = params.url
+      ? await openAndCaptureDom(params.url, {
+          closeAfterCapture: params.closeAfterCapture,
+        })
+      : await captureDom();
 
     const result = await saveDocument({
       url: dom.url,

@@ -72,7 +72,7 @@ export function createServer(): McpServer {
 
   server.tool(
     "capture-page",
-    "Capture the active Safari tab's full DOM content and save it to Readwise Reader",
+    "Capture a page's full DOM content and save it to Readwise Reader. Provide a URL to open it in Safari automatically, or omit to capture the current active tab.",
     capturePageSchema,
     capturePageHandler,
   );
