@@ -19,6 +19,7 @@ export const capturePageSchema = {
   location: z
     .enum(["new", "later", "shortlist", "archive", "feed"])
     .optional()
+    .default("new")
     .describe("Where to place the document in Reader"),
   category: z
     .enum([

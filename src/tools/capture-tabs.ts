@@ -25,6 +25,7 @@ export const captureTabsSchema = {
   location: z
     .enum(["new", "later", "shortlist", "archive", "feed"])
     .optional()
+    .default("new")
     .describe("Where to place documents in Reader"),
   category: z
     .enum([
