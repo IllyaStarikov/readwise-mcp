@@ -10,18 +10,25 @@ vi.mock("../../src/readwise/client.js", () => ({
   saveDocument: vi.fn(),
 }));
 
+vi.mock("../../src/utils/platform.js", () => ({
+  isMacOS: vi.fn(),
+}));
+
 import { captureDom, openAndCaptureDom } from "../../src/safari/dom-capture.js";
 import { validateToken, saveDocument } from "../../src/readwise/client.js";
+import { isMacOS } from "../../src/utils/platform.js";
 import { capturePageHandler } from "../../src/tools/capture-page.js";
 
 const mockCaptureDom = vi.mocked(captureDom);
 const mockOpenAndCaptureDom = vi.mocked(openAndCaptureDom);
 const mockValidateToken = vi.mocked(validateToken);
 const mockSaveDocument = vi.mocked(saveDocument);
+const mockIsMacOS = vi.mocked(isMacOS);
 
 describe("capturePageHandler", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockIsMacOS.mockReturnValue(true);
   });
 
   it("captures and saves successfully", async () => {
@@ -226,5 +233,58 @@ describe("capturePageHandler", () => {
     });
     expect((result as any).isError).toBe(true);
     expect(result.content[0].text).toContain("did not finish loading");
+  });
+
+  describe("non-macOS platform", () => {
+    beforeEach(() => {
+      mockIsMacOS.mockReturnValue(false);
+    });
+
+    it("auto-falls back to directSave when url is provided", async () => {
+      mockValidateToken.mockResolvedValue(true);
+      mockSaveDocument.mockResolvedValue({
+        id: "linux-doc",
+        url: "https://readwise.io/reader/doc/linux-doc",
+        alreadyExists: false,
+      });
+
+      const result = await capturePageHandler({
+        url: "https://example.com/article",
+      });
+
+      expect(mockCaptureDom).not.toHaveBeenCalled();
+      expect(mockOpenAndCaptureDom).not.toHaveBeenCalled();
+      expect(mockSaveDocument).toHaveBeenCalledWith(
+        expect.not.objectContaining({ html: expect.anything() }),
+      );
+      expect(result.content[0].text).toContain("Saved to Readwise Reader");
+      expect(result.content[0].text).toContain("Safari unavailable");
+    });
+
+    it("returns error when no url is provided", async () => {
+      mockValidateToken.mockResolvedValue(true);
+
+      const result = await capturePageHandler({});
+
+      expect((result as any).isError).toBe(true);
+      expect(result.content[0].text).toContain("requires macOS");
+      expect(mockSaveDocument).not.toHaveBeenCalled();
+    });
+
+    it("does not show Safari unavailable note when directSave is explicit", async () => {
+      mockValidateToken.mockResolvedValue(true);
+      mockSaveDocument.mockResolvedValue({
+        id: "explicit-doc",
+        url: "https://readwise.io/reader/doc/explicit-doc",
+        alreadyExists: false,
+      });
+
+      const result = await capturePageHandler({
+        url: "https://example.com",
+        directSave: true,
+      });
+
+      expect(result.content[0].text).not.toContain("Safari unavailable");
+    });
   });
 });

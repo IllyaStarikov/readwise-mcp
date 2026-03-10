@@ -17,20 +17,27 @@ vi.mock("../../src/utils/logger.js", () => ({
   logError: vi.fn(),
 }));
 
+vi.mock("../../src/utils/platform.js", () => ({
+  isMacOS: vi.fn(),
+}));
+
 import { listTabs } from "../../src/safari/tab-list.js";
 import { captureDom } from "../../src/safari/dom-capture.js";
 import { validateToken, saveDocument } from "../../src/readwise/client.js";
+import { isMacOS } from "../../src/utils/platform.js";
 import { captureTabsHandler } from "../../src/tools/capture-tabs.js";
 
 const mockListTabs = vi.mocked(listTabs);
 const mockCaptureDom = vi.mocked(captureDom);
 const mockValidateToken = vi.mocked(validateToken);
 const mockSaveDocument = vi.mocked(saveDocument);
+const mockIsMacOS = vi.mocked(isMacOS);
 
 describe("captureTabsHandler", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.useFakeTimers();
+    mockIsMacOS.mockReturnValue(true);
     mockValidateToken.mockResolvedValue(true);
   });
 
@@ -121,5 +128,16 @@ describe("captureTabsHandler", () => {
     expect(result.content[0].text).toContain("1/2 tabs");
     expect(result.content[0].text).toContain("1 failed");
     expect(result.content[0].text).toContain("[FAIL]");
+  });
+
+  it("returns error on non-macOS", async () => {
+    mockIsMacOS.mockReturnValue(false);
+
+    const result = await captureTabsHandler({});
+
+    expect((result as any).isError).toBe(true);
+    expect(result.content[0].text).toContain("requires macOS");
+    expect(mockListTabs).not.toHaveBeenCalled();
+    expect(mockValidateToken).not.toHaveBeenCalled();
   });
 });

@@ -4,6 +4,7 @@ import { captureDom } from "../safari/dom-capture.js";
 import { saveDocument, validateToken } from "../readwise/client.js";
 import { errorToToolResult } from "../utils/errors.js";
 import { logError } from "../utils/logger.js";
+import { isMacOS } from "../utils/platform.js";
 
 export const captureTabsSchema = {
   urls: z
@@ -65,6 +66,14 @@ export async function captureTabsHandler(params: {
   notes?: string;
 }) {
   try {
+    if (!isMacOS()) {
+      return errorToToolResult(
+        new Error(
+          "capture-tabs requires macOS with Safari. Use capture-page with a url parameter to save individual URLs to Readwise Reader.",
+        ),
+      );
+    }
+
     const valid = await validateToken();
     if (!valid) {
       return errorToToolResult(

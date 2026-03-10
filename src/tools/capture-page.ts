@@ -2,6 +2,7 @@ import { z } from "zod";
 import { captureDom, openAndCaptureDom } from "../safari/dom-capture.js";
 import { saveDocument, validateToken } from "../readwise/client.js";
 import { errorToToolResult } from "../utils/errors.js";
+import { isMacOS } from "../utils/platform.js";
 
 export const capturePageSchema = {
   url: z
@@ -91,7 +92,17 @@ export async function capturePageHandler(params: {
       );
     }
 
-    if (params.directSave) {
+    if (!isMacOS() && !params.url) {
+      return errorToToolResult(
+        new Error(
+          "Capturing the active Safari tab requires macOS. Provide a url parameter to save directly to Readwise Reader.",
+        ),
+      );
+    }
+
+    const effectiveDirectSave = params.directSave || !isMacOS();
+
+    if (effectiveDirectSave) {
       if (!params.url) {
         return errorToToolResult(
           new Error("directSave requires a url parameter."),
@@ -114,7 +125,11 @@ export async function capturePageHandler(params: {
         ? "Already existed in Readwise Reader (content not updated)"
         : "Saved to Readwise Reader";
 
-      let output = `${status}\n\n`;
+      let output = `${status}\n`;
+      if (!isMacOS() && !params.directSave) {
+        output += "(Safari unavailable — saved directly via Readwise)\n";
+      }
+      output += "\n";
       output += `Title: ${params.title ?? "(Readwise will extract)"}\n`;
       output += `URL: ${params.url}\n`;
       output += `Readwise URL: ${result.url}\n`;

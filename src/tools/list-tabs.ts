@@ -1,10 +1,17 @@
 import { listTabs } from "../safari/tab-list.js";
 import { errorToToolResult } from "../utils/errors.js";
+import { isMacOS } from "../utils/platform.js";
 
 export const listTabsSchema = {};
 
 export async function listTabsHandler() {
   try {
+    if (!isMacOS()) {
+      return errorToToolResult(
+        new Error("list-tabs requires macOS with Safari."),
+      );
+    }
+
     const tabs = await listTabs();
 
     if (tabs.length === 0) {
