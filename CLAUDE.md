@@ -1,6 +1,6 @@
 # Safari-Readwise MCP Server
 
-MCP server for macOS that captures authenticated DOM content from Safari tabs and provides full Readwise library management via 15 tools.
+MCP server that captures authenticated DOM content from Safari tabs (macOS) and provides full Readwise library management via 16 tools. On non-macOS platforms, Safari capture tools are unavailable but all Readwise API tools work, and `capture-page` auto-falls back to direct URL save.
 
 ## Quick Reference
 
@@ -17,7 +17,7 @@ npm run typecheck    # tsc --noEmit
 ```
 src/
 ├── index.ts              # Entry point — stdio transport
-├── server.ts             # MCP server — registers all 15 tools
+├── server.ts             # MCP server — registers all 16 tools
 ├── readwise/
 │   ├── shared.ts         # getToken(), handleApiResponse() — used by both API modules
 │   ├── reader-api.ts     # Reader v3 API: auth, save, list/update/delete documents, tags
@@ -36,6 +36,7 @@ src/
 │   ├── check-setup.ts
 │   ├── capture-page.ts
 │   ├── capture-tabs.ts
+│   ├── capture-urls.ts
 │   ├── list-documents.ts
 │   ├── update-document.ts
 │   ├── delete-document.ts
@@ -50,6 +51,7 @@ src/
 └── utils/
     ├── errors.ts         # Error classes + errorToToolResult helper
     ├── logger.ts         # stderr logger
+    ├── platform.ts       # isMacOS() — platform detection for Safari tool guards
     └── temp-file.ts      # Temp file for large DOM transfers
 ```
 
@@ -66,26 +68,27 @@ src/
 ## Environment
 
 - **READWISE_TOKEN** (required): API token from https://readwise.io/access_token
-- macOS only (Safari AppleScript integration)
+- macOS required for Safari tools (DOM capture, tab listing); Readwise API tools work on any platform
 - Node >= 18 (uses native `fetch`)
 
 ## Testing
 
 Tests are in `tests/` mirroring `src/` structure. All API calls are mocked via `vi.fn()` on `global.fetch` or `vi.mock()`. No real API calls in tests.
 
-- 25 test files, 134 tests
+- 26 test files, 147 tests
 - API layer tests verify URL construction, headers, body serialization, and error mapping
 - Tool handler tests verify output formatting, empty states, pagination display, and error propagation
 
-## Tools (15 total)
+## Tools (16 total)
 
-### Safari (4)
+### Safari (5) — macOS only (except `capture-page`/`capture-urls` with URLs, which work cross-platform via directSave fallback)
 | Tool | Description |
 |------|-------------|
-| `list-tabs` | List open Safari tabs |
-| `check-setup` | Diagnostic check (Safari permissions + Readwise token) |
-| `capture-page` | Capture a page DOM → Readwise Reader (provide URL or capture active tab) |
-| `capture-tabs` | Capture multiple tabs → Readwise Reader (rate-limited) |
+| `list-tabs` | List open Safari tabs (macOS only) |
+| `check-setup` | Diagnostic check — Safari permissions (macOS) + Readwise token |
+| `capture-page` | Capture a page DOM → Readwise Reader. On non-macOS, auto-falls back to directSave |
+| `capture-tabs` | Capture multiple tabs → Readwise Reader (macOS only) |
+| `capture-urls` | Capture a list of URLs → Readwise Reader. Uses Safari DOM capture on macOS, direct save on other platforms |
 
 ### Reader v3 (5)
 | Tool | Description |
@@ -112,3 +115,4 @@ Tests are in `tests/` mirroring `src/` structure. All API calls are mocked via `
 - **`saveDocument` special 200/201 handling**: Unlike all other API functions that delegate entirely to `handleApiResponse()`, `saveDocument` checks 200 (already exists) and 201 (created) itself, then delegates non-2xx to `handleApiResponse`. This is because it needs to distinguish between the two success statuses to set `alreadyExists`.
 - **`list-documents` schema `withHtmlContent` default**: `.optional().default(false)` is technically unnecessary since the API layer treats `undefined` as falsy, but it's harmless and makes the default explicit in the schema.
 - **Global rate limiter vs per-tool delays**: All Readwise API calls go through `rateLimitedFetch()` which serializes requests with 1.3s spacing. This handles concurrent MCP tool calls (e.g., 50 parallel `delete-document` calls) gracefully. `capture-tabs.ts` no longer needs its own delay logic.
+- **Platform-aware Safari tools**: `isMacOS()` from `utils/platform.ts` guards Safari-dependent code. On non-macOS: `capture-page` and `capture-urls` auto-fall back to `directSave` (URL-only, Readwise fetches content); `list-tabs`, `capture-tabs` return clear errors; `check-setup` skips Safari diagnostics but still checks the Readwise token. All 16 tools remain registered on all platforms.

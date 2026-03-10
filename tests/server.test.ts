@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { createServer } from "../src/server.js";
 
 describe("server registration", () => {
-  it("registers all 15 tools", () => {
+  it("registers all 16 tools", () => {
     const server = createServer();
 
     // Access the internal tool registry (plain object keyed by tool name)
@@ -10,11 +10,12 @@ describe("server registration", () => {
     const toolNames = Object.keys(registeredTools);
 
     const expectedTools = [
-      // Safari (4)
+      // Safari (5)
       "list-tabs",
       "check-setup",
       "capture-page",
       "capture-tabs",
+      "capture-urls",
       // Reader v3 (5)
       "list-documents",
       "update-document",
@@ -30,7 +31,7 @@ describe("server registration", () => {
       "daily-review",
     ];
 
-    expect(toolNames).toHaveLength(15);
+    expect(toolNames).toHaveLength(16);
 
     for (const name of expectedTools) {
       expect(toolNames, `Missing tool: ${name}`).toContain(name);

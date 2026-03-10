@@ -32,6 +32,7 @@ import { dailyReviewHandler } from "../src/tools/daily-review.js";
 import { checkSetupHandler } from "../src/tools/check-setup.js";
 import { listTabsHandler } from "../src/tools/list-tabs.js";
 import { capturePageHandler } from "../src/tools/capture-page.js";
+import { captureUrlsHandler } from "../src/tools/capture-urls.js";
 
 // ── Constants & shared state ──
 
@@ -517,6 +518,20 @@ describe.skipIf(!READWISE_TOKEN)("Smoke Tests", { timeout: 120_000 }, () => {
         await rateLimitDelay();
         await deleteDocument(idMatch[1]);
       }
+    });
+
+    it("captureUrlsHandler captures multiple URLs", async () => {
+      await rateLimitDelay();
+      const result = await captureUrlsHandler({
+        urls: ["https://example.com", "https://example.org"],
+        closeAfterCapture: true,
+        location: "new",
+        tags: [TEST_TAG],
+      });
+      const text = getToolText(result);
+      expect(text).toContain("Captured");
+      expect(text).toContain("URLs");
+      expect(text).toContain("[OK]");
     });
   });
 });

@@ -10,6 +10,10 @@ import {
   captureTabsHandler,
 } from "./tools/capture-tabs.js";
 import {
+  captureUrlsSchema,
+  captureUrlsHandler,
+} from "./tools/capture-urls.js";
+import {
   listDocumentsSchema,
   listDocumentsHandler,
 } from "./tools/list-documents.js";
@@ -58,30 +62,37 @@ export function createServer(): McpServer {
 
   server.tool(
     "list-tabs",
-    "List all open Safari tabs with their URLs and titles",
+    "List all open Safari tabs with their URLs and titles (macOS only)",
     listTabsSchema,
     listTabsHandler,
   );
 
   server.tool(
     "check-setup",
-    "Check Safari permissions and Readwise token validity",
+    "Check Safari permissions (macOS) and Readwise token validity",
     checkSetupSchema,
     checkSetupHandler,
   );
 
   server.tool(
     "capture-page",
-    "Capture a page's full DOM content and save it to Readwise Reader. Provide a URL to open it in Safari automatically, or omit to capture the current active tab.",
+    "Capture a page's full DOM content via Safari (macOS) and save it to Readwise Reader. Provide a URL to capture, or omit to capture the current active tab. On non-macOS, URLs are saved directly without DOM capture.",
     capturePageSchema,
     capturePageHandler,
   );
 
   server.tool(
     "capture-tabs",
-    "Capture multiple Safari tabs and save each to Readwise Reader",
+    "Capture multiple Safari tabs and save each to Readwise Reader (macOS only)",
     captureTabsSchema,
     captureTabsHandler,
+  );
+
+  server.tool(
+    "capture-urls",
+    "Capture a list of URLs and save each to Readwise Reader. Uses Safari DOM capture on macOS (preserving logins/paywall access), falls back to direct save on other platforms.",
+    captureUrlsSchema,
+    captureUrlsHandler,
   );
 
   // ── Reader v3 tools ──
