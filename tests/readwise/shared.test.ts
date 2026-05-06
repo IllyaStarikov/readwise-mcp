@@ -1,8 +1,27 @@
-import { describe, it, expect, afterEach } from "vitest";
-import { getToken, handleApiResponse } from "../../src/readwise/shared.js";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+
+vi.mock("../../src/utils/keychain.js", () => ({
+  KEYCHAIN_SERVICE: "safari-readwise-mcp",
+  getTokenFromKeychain: vi.fn(() => null),
+}));
+
+import {
+  getToken,
+  handleApiResponse,
+  _resetTokenCache,
+} from "../../src/readwise/shared.js";
+import { getTokenFromKeychain } from "../../src/utils/keychain.js";
+
+const mockGetTokenFromKeychain = vi.mocked(getTokenFromKeychain);
 
 describe("shared helpers", () => {
   const originalEnv = process.env.READWISE_TOKEN;
+
+  beforeEach(() => {
+    _resetTokenCache();
+    mockGetTokenFromKeychain.mockClear();
+    mockGetTokenFromKeychain.mockReturnValue(null);
+  });
 
   afterEach(() => {
     if (originalEnv !== undefined) {
@@ -18,9 +37,53 @@ describe("shared helpers", () => {
       expect(getToken()).toBe("my-token");
     });
 
-    it("throws ReadwiseTokenError when not set", () => {
+    it("env wins over Keychain", () => {
+      process.env.READWISE_TOKEN = "from-env";
+      mockGetTokenFromKeychain.mockReturnValue("from-keychain");
+      expect(getToken()).toBe("from-env");
+      expect(mockGetTokenFromKeychain).not.toHaveBeenCalled();
+    });
+
+    it("falls back to Keychain when env is unset (on macOS)", () => {
       delete process.env.READWISE_TOKEN;
-      expect(() => getToken()).toThrow("READWISE_TOKEN");
+      mockGetTokenFromKeychain.mockReturnValue("from-keychain");
+      // platform.isMacOS is real; we're running on darwin per test environment
+      expect(getToken()).toBe("from-keychain");
+    });
+
+    it("memoizes the Keychain lookup across calls", () => {
+      delete process.env.READWISE_TOKEN;
+      mockGetTokenFromKeychain.mockReturnValue("cached-token");
+      getToken();
+      getToken();
+      getToken();
+      expect(mockGetTokenFromKeychain).toHaveBeenCalledTimes(1);
+    });
+
+    it("memoizes a Keychain miss too (does not retry the shellout)", () => {
+      delete process.env.READWISE_TOKEN;
+      mockGetTokenFromKeychain.mockReturnValue(null);
+      expect(() => getToken()).toThrow();
+      expect(() => getToken()).toThrow();
+      expect(mockGetTokenFromKeychain).toHaveBeenCalledTimes(1);
+    });
+
+    it("throws ReadwiseTokenError when neither env nor Keychain has a token", () => {
+      delete process.env.READWISE_TOKEN;
+      mockGetTokenFromKeychain.mockReturnValue(null);
+      const err = (() => {
+        try {
+          getToken();
+          return null;
+        } catch (e) {
+          return e;
+        }
+      })();
+      expect(err).toBeTruthy();
+      expect((err as Error).name).toBe("ReadwiseTokenError");
+      expect((err as Error).message).toContain("READWISE_TOKEN");
+      // On macOS, the message should also mention setup-token
+      expect((err as Error).message).toContain("setup-token");
     });
   });
 
