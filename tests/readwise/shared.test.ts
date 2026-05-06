@@ -5,14 +5,20 @@ vi.mock("../../src/utils/keychain.js", () => ({
   getTokenFromKeychain: vi.fn(() => null),
 }));
 
+vi.mock("../../src/utils/platform.js", () => ({
+  isMacOS: vi.fn(() => true),
+}));
+
 import {
   getToken,
   handleApiResponse,
   _resetTokenCache,
 } from "../../src/readwise/shared.js";
 import { getTokenFromKeychain } from "../../src/utils/keychain.js";
+import { isMacOS } from "../../src/utils/platform.js";
 
 const mockGetTokenFromKeychain = vi.mocked(getTokenFromKeychain);
+const mockIsMacOS = vi.mocked(isMacOS);
 
 describe("shared helpers", () => {
   const originalEnv = process.env.READWISE_TOKEN;
@@ -21,6 +27,9 @@ describe("shared helpers", () => {
     _resetTokenCache();
     mockGetTokenFromKeychain.mockClear();
     mockGetTokenFromKeychain.mockReturnValue(null);
+    // Default: assume macOS so the Keychain code path is exercised
+    // regardless of the host that runs the tests (CI uses Linux).
+    mockIsMacOS.mockReturnValue(true);
   });
 
   afterEach(() => {
@@ -44,10 +53,9 @@ describe("shared helpers", () => {
       expect(mockGetTokenFromKeychain).not.toHaveBeenCalled();
     });
 
-    it("falls back to Keychain when env is unset (on macOS)", () => {
+    it("falls back to Keychain on macOS when env is unset", () => {
       delete process.env.READWISE_TOKEN;
       mockGetTokenFromKeychain.mockReturnValue("from-keychain");
-      // platform.isMacOS is real; we're running on darwin per test environment
       expect(getToken()).toBe("from-keychain");
     });
 
@@ -68,7 +76,7 @@ describe("shared helpers", () => {
       expect(mockGetTokenFromKeychain).toHaveBeenCalledTimes(1);
     });
 
-    it("throws ReadwiseTokenError when neither env nor Keychain has a token", () => {
+    it("on macOS, missing-token error message mentions setup-token", () => {
       delete process.env.READWISE_TOKEN;
       mockGetTokenFromKeychain.mockReturnValue(null);
       const err = (() => {
@@ -82,8 +90,28 @@ describe("shared helpers", () => {
       expect(err).toBeTruthy();
       expect((err as Error).name).toBe("ReadwiseTokenError");
       expect((err as Error).message).toContain("READWISE_TOKEN");
-      // On macOS, the message should also mention setup-token
       expect((err as Error).message).toContain("setup-token");
+    });
+
+    it("on non-macOS, never touches the Keychain and uses the env-only error message", () => {
+      mockIsMacOS.mockReturnValue(false);
+      delete process.env.READWISE_TOKEN;
+      mockGetTokenFromKeychain.mockReturnValue("would-not-be-used");
+
+      const err = (() => {
+        try {
+          getToken();
+          return null;
+        } catch (e) {
+          return e;
+        }
+      })();
+      expect(err).toBeTruthy();
+      expect((err as Error).name).toBe("ReadwiseTokenError");
+      expect((err as Error).message).toContain("READWISE_TOKEN");
+      expect((err as Error).message).not.toContain("Keychain");
+      expect((err as Error).message).not.toContain("setup-token");
+      expect(mockGetTokenFromKeychain).not.toHaveBeenCalled();
     });
   });
 
