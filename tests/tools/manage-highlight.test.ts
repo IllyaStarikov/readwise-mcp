@@ -63,7 +63,7 @@ describe("manageHighlightHandler", () => {
     expect(result.content[0].text).toContain("Highlight 99 deleted successfully.");
   });
 
-  it("returns isError on failure", async () => {
+  it("returns isError on update failure", async () => {
     mockUpdateHighlight.mockRejectedValue(new Error("Not found"));
 
     const result = await manageHighlightHandler({
@@ -74,5 +74,46 @@ describe("manageHighlightHandler", () => {
 
     expect((result as any).isError).toBe(true);
     expect(result.content[0].text).toContain("Not found");
+  });
+
+  it("returns isError on delete failure", async () => {
+    mockDeleteHighlight.mockRejectedValue(new Error("Permission denied"));
+
+    const result = await manageHighlightHandler({
+      id: 99,
+      action: "delete",
+    });
+
+    expect((result as any).isError).toBe(true);
+    expect(result.content[0].text).toContain("Permission denied");
+    expect(mockUpdateHighlight).not.toHaveBeenCalled();
+  });
+
+  it("truncates very long highlight text in the success message", async () => {
+    const longText = "a".repeat(300);
+    mockUpdateHighlight.mockResolvedValue({
+      id: 7,
+      text: longText,
+      note: "",
+      location: 1,
+      location_type: "page",
+      highlighted_at: null,
+      url: null,
+      color: "yellow",
+      updated: "2024-01-15",
+      book_id: 1,
+      tags: [],
+    });
+
+    const result = await manageHighlightHandler({
+      id: 7,
+      action: "update",
+      text: longText,
+    });
+
+    const text = result.content[0].text;
+    expect(text).toContain("...");
+    // The displayed text portion should be 150 chars + "..."
+    expect(text).toContain("a".repeat(150));
   });
 });

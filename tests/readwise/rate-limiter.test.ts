@@ -160,4 +160,60 @@ describe("rate-limiter", () => {
 
     expect(mockFetch).toHaveBeenCalledWith("https://example.com", init);
   });
+
+  it("falls back to 60s wait when Retry-After header is missing on 429", async () => {
+    const response429 = new Response("rate limited", { status: 429 });
+    mockFetch
+      .mockResolvedValueOnce(response429)
+      .mockResolvedValueOnce(okResponse("success"));
+
+    const promise = rateLimitedFetch("https://example.com");
+
+    // First call gets 429 with no Retry-After header — should wait 60s
+    await vi.advanceTimersByTimeAsync(0);
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+
+    // Advance 30s — should NOT have retried yet
+    await vi.advanceTimersByTimeAsync(30_000);
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+
+    // Advance past the full 60s
+    await vi.advanceTimersByTimeAsync(31_000);
+
+    const response = await promise;
+    expect(response.status).toBe(200);
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+  });
+
+  it("retries immediately when Retry-After is non-numeric (current behavior)", async () => {
+    // Documents current behavior: parseInt of "Wed, 21 Oct 2015 ..." → NaN,
+    // delay(NaN * 1000) treats NaN as 0, so retry fires on the next tick.
+    const response429 = new Response("rate limited", {
+      status: 429,
+      headers: { "Retry-After": "Wed, 21 Oct 2015 07:28:00 GMT" },
+    });
+    mockFetch
+      .mockResolvedValueOnce(response429)
+      .mockResolvedValueOnce(okResponse("success"));
+
+    const promise = rateLimitedFetch("https://example.com");
+    await vi.advanceTimersByTimeAsync(0);
+    // Advance only minimally — the retry should already have fired
+    await vi.advanceTimersByTimeAsync(10);
+
+    const response = await promise;
+    expect(response.status).toBe(200);
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+  });
+
+  it("forwards URL and Request objects unchanged", async () => {
+    mockFetch.mockResolvedValue(okResponse());
+
+    const url = new URL("https://example.com/path");
+    const p1 = rateLimitedFetch(url);
+    await vi.advanceTimersByTimeAsync(5000);
+    await p1;
+
+    expect(mockFetch).toHaveBeenCalledWith(url, undefined);
+  });
 });
