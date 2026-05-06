@@ -83,6 +83,7 @@ export async function captureUrlsHandler(params: {
     const results: Array<{
       url: string;
       title: string;
+      id?: string;
       success: boolean;
       message: string;
     }> = [];
@@ -110,6 +111,7 @@ export async function captureUrlsHandler(params: {
           results.push({
             url: dom.url,
             title: dom.title,
+            id: result.id,
             success: true,
             message: result.alreadyExists ? "already existed" : "saved",
           });
@@ -128,6 +130,7 @@ export async function captureUrlsHandler(params: {
           results.push({
             url,
             title: "(Readwise will extract)",
+            id: result.id,
             success: true,
             message: result.alreadyExists
               ? "already existed"
@@ -155,7 +158,9 @@ export async function captureUrlsHandler(params: {
 
     for (const r of results) {
       const icon = r.success ? "[OK]" : "[FAIL]";
-      output += `${icon} ${r.title}\n    ${r.url}\n    ${r.message}\n\n`;
+      output += `${icon} ${r.title}\n    ${r.url}\n    ${r.message}`;
+      if (r.id) output += `\n    Document ID: ${r.id}`;
+      output += "\n\n";
     }
 
     return {

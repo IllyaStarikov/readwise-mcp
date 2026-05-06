@@ -46,6 +46,7 @@ const TEST_TAG = `smoke-test-${TEST_RUN_ID}`;
 let createdDocumentId: string;
 let createdDocumentId2: string;
 const createdHighlightIds: number[] = [];
+const extraDocumentIds: string[] = [];
 let createdBookId: number;
 
 // Snapshot of initial state for post-cleanup verification
@@ -85,15 +86,35 @@ describe.skipIf(!READWISE_TOKEN)("Smoke Tests", { timeout: 120_000 }, () => {
       }
     }
 
-    // Cleanup: delete all created documents
-    for (const id of [createdDocumentId, createdDocumentId2]) {
-      if (!id) continue;
+    // Cleanup: delete all created documents (tracked by ID)
+    const deletedIds = new Set<string>();
+    for (const id of [createdDocumentId, createdDocumentId2, ...extraDocumentIds]) {
+      if (!id || deletedIds.has(id)) continue;
       try {
         await deleteDocument(id);
+        deletedIds.add(id);
         await rateLimitDelay();
       } catch {
         // Best-effort cleanup
       }
+    }
+
+    // Fallback: find and delete any remaining documents with the test tag
+    try {
+      await rateLimitDelay();
+      const taggedDocs = await listDocuments({ tag: TEST_TAG });
+      for (const doc of taggedDocs.results) {
+        if (deletedIds.has(doc.id)) continue;
+        try {
+          await deleteDocument(doc.id);
+          deletedIds.add(doc.id);
+          await rateLimitDelay();
+        } catch {
+          // Best-effort cleanup
+        }
+      }
+    } catch {
+      // Best-effort cleanup
     }
 
     // Verify: no test documents remain
@@ -532,6 +553,12 @@ describe.skipIf(!READWISE_TOKEN)("Smoke Tests", { timeout: 120_000 }, () => {
       expect(text).toContain("Captured");
       expect(text).toContain("URLs");
       expect(text).toContain("[OK]");
+
+      // Parse document IDs for cleanup
+      const idMatches = text.matchAll(/Document ID:\s*(\S+)/g);
+      for (const m of idMatches) {
+        extraDocumentIds.push(m[1]);
+      }
     });
   });
 });
